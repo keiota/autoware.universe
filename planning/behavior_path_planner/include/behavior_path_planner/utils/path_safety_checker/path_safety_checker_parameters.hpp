@@ -170,7 +170,7 @@ struct ObjectsFilteringParams
 struct SafetyCheckParams
 {
   bool enable_safety_check;          ///< Enable safety checks.
-  double backward_lane_length;       ///< Length of the backward lane for path generation.
+  double backward_path_length;       ///< Length of the backward lane for path generation.
   double forward_path_length;        ///< Length of the forward path lane for path generation.
   RSSparams rss_params;              ///< Parameters related to the RSS model.
   bool publish_debug_marker{false};  ///< Option to publish debug markers.
@@ -179,10 +179,10 @@ struct SafetyCheckParams
 struct CollisionCheckDebug
 {
   std::string unsafe_reason;                ///< Reason indicating unsafe situation.
-  Pose current_pose{};                      ///< Ego vehicle's current pose.
   Twist current_twist{};                    ///< Ego vehicle's current velocity and rotation.
-  Twist object_twist{};                     ///< Detected object's velocity and rotation.
   Pose expected_ego_pose{};                 ///< Predicted future pose of ego vehicle.
+  Pose current_obj_pose{};                  ///< Detected object's current pose.
+  Twist object_twist{};                     ///< Detected object's velocity and rotation.
   Pose expected_obj_pose{};                 ///< Predicted future pose of object.
   double rss_longitudinal{0.0};             ///< Longitudinal RSS measure.
   double inter_vehicle_distance{0.0};       ///< Distance between ego vehicle and object.
@@ -190,9 +190,10 @@ struct CollisionCheckDebug
   double extended_polygon_lat_offset{0.0};  ///< Lateral offset for extended polygon.
   bool is_front{false};                     ///< True if object is in front of ego vehicle.
   bool is_safe{false};                      ///< True if situation is deemed safe.
-  std::vector<Pose> lerped_path;            ///< Interpolated ego vehicle path.
-  Polygon2d extended_ego_polygon{};         ///< Ego vehicle's extended collision polygon.
-  Polygon2d extended_obj_polygon{};         ///< Detected object's extended collision polygon.
+  std::vector<PoseWithVelocityStamped> ego_predicted_path;  ///< ego vehicle's predicted path.
+  std::vector<PoseWithVelocityAndPolygonStamped> obj_predicted_path;  ///< object's predicted path.
+  Polygon2d extended_ego_polygon{};  ///< Ego vehicle's extended collision polygon.
+  Polygon2d extended_obj_polygon{};  ///< Detected object's extended collision polygon.
 };
 using CollisionCheckDebugPair = std::pair<std::string, CollisionCheckDebug>;
 using CollisionCheckDebugMap =
