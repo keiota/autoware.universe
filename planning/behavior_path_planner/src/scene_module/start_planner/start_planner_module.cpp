@@ -292,6 +292,8 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 {
   updatePullOutStatus();
 
+  RCLCPP_INFO(getLogger(), "Start planner is waiting approval");
+
   if (IsGoalBehindOfEgoInSameRouteSegment()) {
     RCLCPP_WARN_THROTTLE(
       getLogger(), *clock_, 5000, "Start plan for a backward goal is not supported now");
@@ -311,7 +313,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     return output;
   }
 
-  waitApproval();
+  waitApproval(); //is_waiting_approval_ = true;
 
   const double backward_path_length =
     planner_data_->parameters.backward_path_length + parameters_->max_back_distance;
