@@ -55,17 +55,34 @@ TEST(BehaviorPathPlanningObjectsFiltering, createPredictedPath)
     // const bool is_object_front,
     // const bool limit_to_max_velocity
 
-    std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params;
-    ego_predicted_path_params->max_velocity = 10.0;
-    ego_predicted_path_params->min_velocity = 1.0;
-    ego_predicted_path_params->acceleration = 1.0;
-    ego_predicted_path_params->time_horizon_for_front_object = 1.0;
-    ego_predicted_path_params->time_horizon_for_rear_object = 1.0; 
-    ego_predicted_path_params->time_resolution = 0.1;
-    ego_predicted_path_params->delay_until_departure = 1.0;
 
+    // case 1: path_points.size() == 0
+    auto ego_predicted_path_params = std::make_shared<EgoPredictedPathParams>();
     std::vector<PathPointWithLaneId> path_points;
+    geometry_msgs::msg::Pose vehicle_pose = createPose(0,0,0,0,0,0);
 
+    double current_velocity = 0.0;
+    size_t ego_seg_idx = 0;
+    bool is_object_front = true;
+    bool limit_to_max_velocity = false;
+
+    std::vector<PoseWithVelocityStamped> predicted_paths;
+
+    predicted_paths = createPredictedPath(ego_predicted_path_params, 
+                                          path_points, 
+                                          vehicle_pose, 
+                                          current_velocity, 
+                                          ego_seg_idx, 
+                                          is_object_front, 
+                                          limit_to_max_velocity);
+
+    size_t predicted_paths_size = predicted_paths.size();
+    size_t ans_paths_size = 0;
+
+    EXPECT_EQ(predicted_paths_size, ans_paths_size);
+
+
+    //case 2: path_points.size() == 1 && ego_parameters are defined
     float initial_pose_value = 0.0;
     float pose_increment = 1.0;
     size_t point_sample = 1;
@@ -85,29 +102,91 @@ TEST(BehaviorPathPlanningObjectsFiltering, createPredictedPath)
         path_points.push_back(path_point_with_lane_id);
     }
 
-    geometry_msgs::msg::Pose vehicle_pose = createPose(1,0,0,0,0,0);
+    limit_to_max_velocity = true;
+    ego_predicted_path_params->max_velocity = 10.0;
+    ego_predicted_path_params->min_velocity = 1.0;
+    ego_predicted_path_params->acceleration = 1.0;
+    ego_predicted_path_params->time_horizon_for_front_object = 1.0;
+    ego_predicted_path_params->time_horizon_for_rear_object = 1.0; 
+    ego_predicted_path_params->time_resolution = 0.1;
+    ego_predicted_path_params->delay_until_departure = 0.0;
 
-    double current_velocity = 0.0;
-    size_t ego_seg_idx = 0;
-    bool is_object_front = false;
-    bool limit_to_max_velocity = true;
-
-    std::vector<PoseWithVelocityStamped> predicted_paths;
-    std::vector<PoseWithVelocityStamped> ans_paths;
-
-    std::cout << "path_points.size(): " << path_points.size() << std::endl;
-
-    predicted_paths = createPredictedPath(ego_predicted_path_params, 
+    EXPECT_ANY_THROW(predicted_paths = createPredictedPath(ego_predicted_path_params, 
                                           path_points, 
                                           vehicle_pose, 
                                           current_velocity, 
                                           ego_seg_idx, 
                                           is_object_front, 
                                           limit_to_max_velocity);
+                                          );
 
-    //get the length of predicted_paths and ans_paths
-    size_t predicted_paths_size = predicted_paths.size();
-    size_t ans_paths_size = ans_paths.size();
 
+    //case 3: ego_parameters are not defined
+    ego_predicted_path_params = std::make_shared<EgoPredictedPathParams>();
+    std::vector<PathPointWithLaneId> path_points_case_3;
+    point_sample = 10;
+    initial_pose_value = 0.0;
+    pose_increment = 1.0;
+    for (size_t idx = 0; idx < point_sample; ++idx) {
+        PathPoint point;
+        point.pose.position.x = std::exchange(initial_pose_value, initial_pose_value + pose_increment);
+        point.pose.position.y = 0.0;
+        point.pose.position.z = 0.0;
+        point.longitudinal_velocity_mps = 0.1;  // [m/s]
+        point.heading_rate_rps = 0.0;           // [rad/s]
+        point.is_final = (idx == point_sample - 1);
+
+        PathPointWithLaneId path_point_with_lane_id;
+        path_point_with_lane_id.point = point;
+        path_point_with_lane_id.lane_ids = std::vector<int64_t>();
+
+        path_points_case_3.push_back(path_point_with_lane_id);
+    }
+    current_velocity = 0.0;
+    ego_seg_idx = 0;
+    is_object_front = true;
+    limit_to_max_velocity = false;
+    vehicle_pose = createPose(0,0,0,0,0,0);
+
+    predicted_paths = createPredictedPath(ego_predicted_path_params, 
+                                          path_points_case_3, 
+                                          vehicle_pose, 
+                                          current_velocity, 
+                                          ego_seg_idx, 
+                                          is_object_front, 
+                                          limit_to_max_velocity);
+
+    predicted_paths_size = predicted_paths.size();
+    //std::cout << "predicted_paths_size: " << predicted_paths_size << std::endl;
+    ans_paths_size = 0;
+    EXPECT_EQ(predicted_paths_size, ans_paths_size);
+
+
+    //case 4: vehicle_pose is not intilized
+    geometry_msgs::msg::Pose vehicle_pose_case_4;
+
+    current_velocity = 0.0;
+    ego_seg_idx = 0;
+    is_object_front = true;
+    limit_to_max_velocity = true;
+    ego_predicted_path_params->max_velocity = 10.0;
+    ego_predicted_path_params->min_velocity = 1.0;
+    ego_predicted_path_params->acceleration = 1.0;
+    ego_predicted_path_params->time_horizon_for_front_object = 1.0;
+    ego_predicted_path_params->time_horizon_for_rear_object = 1.0; 
+    ego_predicted_path_params->time_resolution = 0.1;
+    ego_predicted_path_params->delay_until_departure = 0.0;
+
+    predicted_paths = createPredictedPath(ego_predicted_path_params,
+                                          path_points_case_3, 
+                                          vehicle_pose, 
+                                          current_velocity, 
+                                          ego_seg_idx, 
+                                          is_object_front, 
+                                          limit_to_max_velocity);
+
+    predicted_paths_size = predicted_paths.size();
+    //std::cout << "predicted_paths_size: " << predicted_paths_size << std::endl;   
+    ans_paths_size = ego_predicted_path_params->time_horizon_for_front_object / ego_predicted_path_params->time_resolution + 1;                                     
     EXPECT_EQ(predicted_paths_size, ans_paths_size);
 }

@@ -115,7 +115,7 @@ FrenetPoint convertToFrenetPoint(
   FrenetPoint frenet_point;
 
   const double longitudinal_length =
-    motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, search_point_geom);
+    motion_utils::calcLongitudinalOffsetToSegment(points, seg_idx, search_point_geom, true);
   frenet_point.length = motion_utils::calcSignedArcLength(points, 0, seg_idx) + longitudinal_length;
   frenet_point.distance = motion_utils::calcLateralOffset(points, search_point_geom, seg_idx);
 
